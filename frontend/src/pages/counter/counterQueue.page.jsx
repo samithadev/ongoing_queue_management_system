@@ -86,6 +86,10 @@ function CounterQueuePage() {
 
     socket.emit("callUser", { userId, counterName });
     socket.emit("curruntToken", { tokenNo, counterName });
+
+    socket.emit("callNotification", {
+      message: `Token ${tokenNo} is being called at ${counterName}`,
+    });
   };
 
   return (

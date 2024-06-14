@@ -87,7 +87,6 @@ function IssueViewPage() {
         status: "offline",
       });
       alert("Issue mark as done!!");
-      navigate("/counter/allissues");
 
       const updatedIssues = issues.filter((issue) => issue.issueId != issueId);
       console.log(issueId);
@@ -97,6 +96,7 @@ function IssueViewPage() {
         const nextIssue = updatedIssues[0];
         // setAssignUser(nextIssue.user.userId);
         console.log(nextIssue);
+        navigate(`/counter/issueView/${nextIssue.issueId}`);
         socket.emit("callUser", {
           userId: nextIssue.userId,
           counterName: nextIssue.counter.counterName,
@@ -105,8 +105,12 @@ function IssueViewPage() {
           tokenNo: nextIssue.tokenNo,
           counterName: nextIssue.counter.counterName,
         });
+        socket.emit("callNotification", {
+          message: `Token ${nextIssue.tokenNo} is being called at ${nextIssue.counter.counterName}`,
+        });
       } else {
         // setAssignUser("");
+        navigate("/counter/allissues");
       }
     } catch (error) {
       console.error("Error updating issue status", error);

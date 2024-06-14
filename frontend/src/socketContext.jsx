@@ -11,6 +11,7 @@ export const SocketProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [userId, setUserId] = useState(null);
   const [currentToken, setCurrentToken] = useState(null); // New state for currentToken
+  const [socket, setSocket] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
