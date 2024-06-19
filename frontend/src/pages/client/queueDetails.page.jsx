@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ClientHeader from "./components/Header";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -18,7 +18,21 @@ function QueueDetailsPage() {
 
   const { notifications } = useSocket();
 
+  const previousNotificationsLength = useRef(notifications.length);
+
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (previousNotificationsLength.current < notifications.length) {
+      const newNotifications = notifications.slice(
+        previousNotificationsLength.current
+      );
+      newNotifications.forEach((notification) => {
+        alert(`New notification: ${notification.message}`);
+      });
+      previousNotificationsLength.current = notifications.length;
+    }
+  }, [notifications]);
 
   useEffect(() => {
     const decodedToken = jwtDecode(localStorage.getItem("token"));

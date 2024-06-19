@@ -14,6 +14,7 @@ function CounterQueuePage() {
   const [counterId, setCounterId] = useState("");
   const [assignuser, setassignUser] = useState("");
   const [issues, setIssues] = useState([]);
+  const [calledIssues, setCalledIssues] = useState([]);
 
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
@@ -81,6 +82,7 @@ function CounterQueuePage() {
   };
 
   const handleCall = (userId, tokenNo, counterName) => {
+    setCalledIssues([...calledIssues, userId]);
     // Join the user to their room
     socket.emit("joinRoom", userId);
 
@@ -128,9 +130,14 @@ function CounterQueuePage() {
                       issue.counter.counterName
                     )
                   }
-                  className="p-2 bg-green-600 text-white rounded-lg"
+                  // className="p-2 bg-green-600 text-white rounded-lg"
+                  className={`p-2 text-white rounded-lg ${
+                    calledIssues.includes(issue.userId)
+                      ? "bg-yellow-600"
+                      : "bg-green-600"
+                  }`}
                 >
-                  Call
+                  {calledIssues.includes(issue.userId) ? "Recall" : "Call"}
                 </button>
               </div>
             </div>
