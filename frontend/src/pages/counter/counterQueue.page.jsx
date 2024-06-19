@@ -55,6 +55,29 @@ function CounterQueuePage() {
     }
   }, [counterId]);
 
+  //---------------------------------------------------
+  useEffect(() => {
+    // Listen for new issues and updates
+    socket.on("issueAdded", (newIssue) => {
+      setIssues((prevIssues) => [...prevIssues, newIssue]);
+    });
+
+    socket.on("issueUpdated", (updatedIssue) => {
+      setIssues((prevIssues) =>
+        prevIssues.map((issue) =>
+          issue.issueId === updatedIssue.issueId ? updatedIssue : issue
+        )
+      );
+    });
+
+    // Cleanup on unmount
+    return () => {
+      socket.off("issueAdded");
+      socket.off("issueUpdated");
+    };
+  }, []);
+  //---------------------------------------------------
+
   const fetchCounterName = async (assignUser) => {
     try {
       const response = await axios.post(

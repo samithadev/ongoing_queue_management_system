@@ -5,6 +5,7 @@ import { FaRegUserCircle } from "react-icons/fa";
 import { FiBell } from "react-icons/fi";
 import axios from "axios";
 import ClientHeader from "./components/Header";
+import { io } from "socket.io-client";
 
 function CreateIssuePage() {
   const [username, setUsername] = useState("");
@@ -16,6 +17,7 @@ function CreateIssuePage() {
   const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
+  const socket = io("http://localhost:3000");
 
   useEffect(() => {
     async function checkUserIssue() {
@@ -80,10 +82,22 @@ function CreateIssuePage() {
         }
       );
 
-      alert("Issue created successfully!");
-      navigate("/client/queueDetails", {
-        state: { issueResponse: response.data },
-      });
+      if (response.data.issueId) {
+        const responseIssue = await axios.post(
+          "http://localhost:3000/issue/singleIssue",
+          {
+            issueId: response.data.issueId,
+          }
+        );
+
+        socket.emit("issueAdded", responseIssue.data);
+        console.log("after create:" + responseIssue.data);
+
+        alert("Issue created successfully!");
+        navigate("/client/queueDetails", {
+          state: { issueResponse: response.data },
+        });
+      }
     } catch (error) {
       console.error("Failed to create issue:", error);
       alert(`Failed to create issue: ${error.response.data.error}`);
