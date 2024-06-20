@@ -73,6 +73,7 @@ function IssueViewPage() {
         status: "offline",
       });
       alert("Issue mark as done!!");
+      socket.emit("issueDone", { issueId });
       navigate("/counter/allissues");
     } catch (error) {
       console.error("Error updating issue status", error);
@@ -87,6 +88,8 @@ function IssueViewPage() {
         status: "offline",
       });
       alert("Issue mark as done!!");
+
+      socket.emit("issueDone", { issueId });
 
       const updatedIssues = issues.filter((issue) => issue.issueId != issueId);
       console.log(issueId);

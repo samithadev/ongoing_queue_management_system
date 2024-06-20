@@ -39,7 +39,6 @@ const io = new Server(server, {
 });
 
 io.on('connection', (socket) => {
-  console.log('New client connected');
 
   socket.on("issueAdded", (newIssue) => {
     io.emit("issueAdded", newIssue);
@@ -71,6 +70,12 @@ io.on('connection', (socket) => {
     io.to(data.counterName).emit('callTokenNo', {
       token: data.tokenNo,
     });
+  });
+
+  // Listen for issue done events
+  socket.on('issueDone', (data) => {
+    // Broadcast the issueDone event to all connected clients
+    io.emit('issueDone', data);
   });
 
   // socket.on('disconnect', () => {

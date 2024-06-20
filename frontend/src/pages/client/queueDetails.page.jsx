@@ -79,8 +79,13 @@ function QueueDetailsPage() {
       localStorage.setItem("currentToken", JSON.stringify(data.token));
     });
 
+    socket.on("issueDone", () => {
+      navigate("/client/createIssue");
+    });
+
     return () => {
       socket.off("callTokenNo");
+      socket.off("issueDone");
     };
   }, [issueId, navigate]);
 
