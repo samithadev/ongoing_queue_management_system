@@ -52,14 +52,23 @@ function CounterQueuePage() {
   useEffect(() => {
     if (counterId) {
       fetchIssues(counterId);
+      socket.emit("joinCounter", counterId);
     }
   }, [counterId]);
 
   //---------------------------------------------------
   useEffect(() => {
-    // Listen for new issues and updates
+    // Listen for new issue and updates
     socket.on("issueAdded", (newIssue) => {
-      setIssues((prevIssues) => [...prevIssues, newIssue]);
+      if (newIssue.counterId === counterId) {
+        setIssues((prevIssues) => [...prevIssues, newIssue]);
+      }
+    });
+
+    socket.on("issuesAdded", (newIssues) => {
+      if (Array.isArray(newIssues) && newIssues[0].counterId === counterId) {
+        setIssues(newIssues);
+      }
     });
 
     socket.on("issueUpdated", (updatedIssue) => {
@@ -75,7 +84,7 @@ function CounterQueuePage() {
       socket.off("issueAdded");
       socket.off("issueUpdated");
     };
-  }, []);
+  }, [issues]);
   //---------------------------------------------------
 
   const fetchCounterName = async (assignUser) => {
@@ -92,16 +101,6 @@ function CounterQueuePage() {
     } catch (error) {
       console.error("Error fetching counter name", error);
     }
-  };
-
-  const handleCounterClose = async () => {
-    console.log(assignuser);
-    await axios.put("http://localhost:3000/counter/resign_user", {
-      assignuser,
-    });
-
-    localStorage.removeItem("token");
-    navigate("/counterlogin");
   };
 
   const handleCall = (userId, tokenNo, counterName) => {

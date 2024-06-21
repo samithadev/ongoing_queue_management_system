@@ -19,10 +19,16 @@ export const IssueDAO = {
 
     getOnlineCountersWithIssues: async (): Promise<Counter[]> => {
         const counterRepository = connectDB.getRepository(Counter);
-        return await counterRepository.find({ 
+        const counters = await counterRepository.find({ 
             relations: ["issues"],
-            where: { status: "online" }
+            where: { status: "online"}
         });
+
+        counters.forEach(counter => {
+            counter.issues = counter.issues.filter(issue => issue.issueStatus === "pending");
+        });
+
+        return counters;
     },
 
     findMaxTokenIssue: async (): Promise<Issue | null> => {
@@ -84,4 +90,14 @@ export const IssueDAO = {
             .getOne();
         return maxTokenIssue;
     },
+
+    getPendingIssuesForCounter: async (counterId: number) => {
+        const issueRepository = connectDB.getRepository(Issue);
+        return await issueRepository.find({
+          where: {
+            counterId,
+            issueStatus: IssueStatus.PENDING,
+          }
+        });
+      },
 };

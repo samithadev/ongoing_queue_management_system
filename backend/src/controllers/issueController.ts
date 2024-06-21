@@ -101,3 +101,14 @@ export const getIssueIdByStatus = async (req: Request, res: Response): Promise<v
         res.status(500).json({ error: "Internal Server Error" });
     }
 };
+
+//------------------------------------
+export const closeCounterAndReassignIssues = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { counterId } = req.body;
+        const reAssignIssues = await IssueService.reassignIssuesForClosedCounter(Number(counterId));
+        res.status(200).json({ reAssignIssues  });
+    } catch (error) {
+        res.status(500).json({ error: "Can not reassign" });
+    }
+};

@@ -3,6 +3,7 @@ import { Issue } from "../entities/Issue";
 import { Counter } from "../entities/Counter";
 import { Status } from "../entities/Issue";
 import { IssueStatus } from "../entities/Issue";
+import { json } from "stream/consumers";
 
 export const IssueService = {
     createIssue: async (issueDetails: Partial<Issue>): Promise<Issue> => {
@@ -12,9 +13,12 @@ export const IssueService = {
         const counters = await IssueDAO.getOnlineCountersWithIssues();
         if (counters.length === 0) throw new Error("No online counters available");
 
-        const counterWithMinIssues = counters.reduce((prev, curr) =>
-            (prev.issues?.length || 0) < (curr.issues?.length || 0) ? prev : curr
+
+        const counterWithMinIssues = counters
+        .reduce((prev, curr) =>
+            prev.issues?.length  < curr.issues?.length ? prev : curr
         );
+
 
         const maxTokenIssue = await IssueDAO.findMaxTokenForCounter(counterWithMinIssues.counterId);
         const tokenNo = maxTokenIssue ? maxTokenIssue.tokenNo + 1 : 1;
@@ -61,5 +65,32 @@ export const IssueService = {
 
     getIssueIdByStatus: async (userId: number, issueStatus: IssueStatus, status: Status): Promise<number | null> => {
         return await IssueDAO.getIssueIdByStatus(userId, issueStatus, status);
+    },
+
+    // ---------------------------------------
+    reassignIssuesForClosedCounter: async (counterId: number): Promise<Issue[]> => {
+        const issues = await IssueDAO.getPendingIssuesForCounter(counterId);
+        const allcounters = await IssueDAO.getOnlineCountersWithIssues();
+        const reAssignedIssues = [];
+
+        const counters = allcounters.filter(counter => counter.counterId !== counterId);
+
+
+        if (counters.length === 0) throw new Error("No online counters available");
+
+        for (const issue of issues) {
+            const counterWithMinIssues = counters.reduce((prev, curr) =>
+                (prev.issues?.length || 0) < (curr.issues?.length || 0) ? prev : curr
+            );
+
+            issue.counterId = counterWithMinIssues.counterId;
+
+            const maxTokenIssue = await IssueDAO.findMaxTokenForCounter(counterWithMinIssues.counterId);
+            issue.tokenNo = maxTokenIssue ? maxTokenIssue.tokenNo + 1 : 1;
+
+            await IssueDAO.updateIssue(issue);
+            reAssignedIssues.push(issue);
+        }
+        return reAssignedIssues;
     }
 };

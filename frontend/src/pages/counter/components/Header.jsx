@@ -3,6 +3,7 @@ import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { FaRegUserCircle } from "react-icons/fa";
+import { io } from "socket.io-client";
 
 function Header() {
   const [username, setusername] = useState();
@@ -13,6 +14,8 @@ function Header() {
 
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+
+  const socket = io("http://localhost:3000");
 
   const fetchIssues = async (counterId) => {
     try {
@@ -63,14 +66,59 @@ function Header() {
     }
   };
 
+  // const handleCounterClose = async () => {
+  //   console.log(issues);
+  //   await axios.put("http://localhost:3000/issue/closeCounter", {
+  //     counterId,
+  //   });
+  //   if (error.response && error.response.data && error.response.data.message === "No online counters available") {
+  //     alert("Cannot close counter as there are issues assigned to it.");
+  //     return;
+  //   }
+  //   try {
+  //     console.log(assignuser);
+
+  //     await axios.put("http://localhost:3000/counter/resign_user", {
+  //       assignUser: assignuser,
+  //     });
+  //     localStorage.removeItem("token");
+  //     localStorage.clear();
+  //     navigate("/counterlogin");
+  //   } catch (error) {
+  //     console.error("Error resigning user", error);
+  //   }
+  // };
+
   const handleCounterClose = async () => {
     console.log(issues);
-    if (issues.some((issue) => issue.issueStatus === "pending")) {
-      alert("Cannot close counter as there are issues assigned to it.");
-      return;
+    const pendingIssues = issues.filter(
+      (issue) => issue.issueStatus === "pending"
+    );
+
+    if (pendingIssues.length > 0) {
+      try {
+        const response = await axios.put(
+          "http://localhost:3000/issue/closeCounter",
+          {
+            counterId,
+          }
+        );
+        const reAssignedIssues = response.data.reAssignIssues;
+        console.log("reassign Issues: ", reAssignedIssues);
+
+        socket.emit("issuesAdded", reAssignedIssues);
+      } catch (error) {
+        console.log(error);
+        if (error.response.data.error === "Can not reassign") {
+          alert("No online counters");
+          return;
+        } else {
+          console.error("Error closing counter", error);
+        }
+      }
     }
+
     try {
-      console.log(assignuser);
       await axios.put("http://localhost:3000/counter/resign_user", {
         assignUser: assignuser,
       });

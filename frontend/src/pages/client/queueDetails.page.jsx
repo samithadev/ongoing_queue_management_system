@@ -87,7 +87,7 @@ function QueueDetailsPage() {
       socket.off("callTokenNo");
       socket.off("issueDone");
     };
-  }, [issueId, navigate]);
+  }, []);
 
   const handleCancel = async () => {
     try {

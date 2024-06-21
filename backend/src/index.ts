@@ -40,9 +40,23 @@ const io = new Server(server, {
 
 io.on('connection', (socket) => {
 
-  socket.on("issueAdded", (newIssue) => {
-    io.emit("issueAdded", newIssue);
+  socket.on('joinCounter', (counterId) => {
+    socket.join(counterId);
   });
+
+  //send issue to specific counter
+  socket.on("issueAdded", (newIssue) => {
+    io.to(newIssue.counterId).emit("issueAdded", newIssue);
+  });
+
+  // Send multiple issues to specific counter
+  socket.on("issuesAdded", (newIssues) => {
+    if (Array.isArray(newIssues) && newIssues.length > 0) {
+      const counterId = newIssues[0].counterId;
+      io.to(counterId).emit("issuesAdded", newIssues);
+    }
+  });
+
 
   // Event to join a room
   socket.on('joinRoom', (userId) => {
