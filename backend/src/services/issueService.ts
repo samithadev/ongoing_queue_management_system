@@ -13,11 +13,16 @@ export const IssueService = {
         const counters = await IssueDAO.getOnlineCountersWithIssues();
         if (counters.length === 0) throw new Error("No online counters available");
 
+        console.log("Counters with issues", counters);
 
-        const counterWithMinIssues = counters
-        .reduce((prev, curr) =>
-            prev.issues?.length  < curr.issues?.length ? prev : curr
+        const counterWithMinIssues = counters.reduce((prev, curr) => {
+            if (prev.issues?.length === 0) return prev;
+            if (curr.issues?.length === 0) return curr;
+            return prev.issues?.length  < curr.issues?.length ? prev : curr
+        }
         );
+
+        console.log("Counter with min issues", counterWithMinIssues);
 
 
         const maxTokenIssue = await IssueDAO.findMaxTokenForCounter(counterWithMinIssues.counterId);
@@ -75,13 +80,20 @@ export const IssueService = {
 
         const counters = allcounters.filter(counter => counter.counterId !== counterId);
 
+        console.log("Counters with issues", counters);
+
 
         if (counters.length === 0) throw new Error("No online counters available");
 
         for (const issue of issues) {
-            const counterWithMinIssues = counters.reduce((prev, curr) =>
-                (prev.issues?.length || 0) < (curr.issues?.length || 0) ? prev : curr
+            const counterWithMinIssues = counters.reduce((prev, curr) => {
+                if (prev.issues?.length === 0) return prev;
+                if (curr.issues?.length === 0) return curr;
+                return (prev.issues?.length || 0) < (curr.issues?.length || 0) ? prev : curr
+            }
             );
+
+            console.log("Counter with min issues", counterWithMinIssues)
 
             issue.counterId = counterWithMinIssues.counterId;
 

@@ -91,7 +91,6 @@ function CreateIssuePage() {
         );
 
         socket.emit("issueAdded", responseIssue.data);
-        console.log("after create:" + responseIssue.data);
 
         alert("Issue created successfully!");
         navigate("/client/queueDetails", {

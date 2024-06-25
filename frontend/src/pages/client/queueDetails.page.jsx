@@ -9,12 +9,11 @@ import { useSocket } from "../../socketContext";
 const socket = io("http://localhost:3000");
 
 function QueueDetailsPage() {
-  const [currentToken, setCurrentToken] = useState(() => {
-    const storedToken = localStorage.getItem("currentToken");
-    return storedToken ? JSON.parse(storedToken) : null;
-  });
+  const [currentToken, setCurrentToken] = useState(null);
   const [issueId, setIssueId] = useState(null);
   const [myToken, setMyToken] = useState(null);
+  const [counterName, setCounterName] = useState("");
+  const [nextToken, setNextToken] = useState(null);
 
   const { notifications } = useSocket();
 
@@ -62,7 +61,10 @@ function QueueDetailsPage() {
           const issue = responseIssue.data;
           console.log(issue);
           setMyToken(issue.tokenNo);
+          setCounterName(issue.counter.counterName);
+
           socket.emit("joinCounterRoom", issue.counter.counterName); // Join the counter room
+
           if (issue.issueStatus === "done") {
             navigate("/client/createIssue");
           }
@@ -76,7 +78,8 @@ function QueueDetailsPage() {
 
     socket.on("callTokenNo", (data) => {
       setCurrentToken(data.token);
-      localStorage.setItem("currentToken", JSON.stringify(data.token));
+      setNextToken(data.nextToken);
+      // localStorage.setItem("currentToken", JSON.stringify(data.token));
     });
 
     socket.on("issueDone", () => {
@@ -97,6 +100,7 @@ function QueueDetailsPage() {
         status: "offline",
       });
       alert("Issue marked as canceled!");
+      socket.emit("issueDone", { issueId });
       navigate("/client/createIssue");
     } catch (error) {
       console.error("Error updating issue status", error);
@@ -122,8 +126,13 @@ function QueueDetailsPage() {
         </div>
 
         <div className="flex gap-3 text-2xl mt-5">
+          <h1 className="font-bold">Counter Assigned:</h1>
+          <h2>{counterName || "Loading..."}</h2>
+        </div>
+
+        <div className="flex gap-3 text-2xl mt-5">
           <h1 className="font-bold">Next:</h1>
-          <h2>{currentToken ? currentToken + 1 : "Loading..."}</h2>
+          <h2>{nextToken || "none"}</h2>
         </div>
 
         <div className="flex gap-3 text-2xl mt-5">

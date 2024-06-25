@@ -16,6 +16,8 @@ function CounterQueuePage() {
   const [issues, setIssues] = useState([]);
   const [calledIssues, setCalledIssues] = useState([]);
 
+  const nextIssue = null;
+
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
@@ -57,34 +59,67 @@ function CounterQueuePage() {
   }, [counterId]);
 
   //---------------------------------------------------
+
   useEffect(() => {
     // Listen for new issue and updates
-    socket.on("issueAdded", (newIssue) => {
+    const handleIssueAdded = (newIssue) => {
       if (newIssue.counterId === counterId) {
         setIssues((prevIssues) => [...prevIssues, newIssue]);
       }
-    });
+    };
 
-    socket.on("issuesAdded", (newIssues) => {
+    const handleIssuesAdded = (newIssues) => {
       if (Array.isArray(newIssues) && newIssues[0].counterId === counterId) {
-        setIssues(newIssues);
+        setIssues((prevIssues) => [...prevIssues, ...newIssues]);
       }
-    });
+    };
 
-    socket.on("issueUpdated", (updatedIssue) => {
+    const handleIssueUpdated = (updatedIssue) => {
       setIssues((prevIssues) =>
         prevIssues.map((issue) =>
           issue.issueId === updatedIssue.issueId ? updatedIssue : issue
         )
       );
-    });
+    };
+
+    socket.on("issueAdded", handleIssueAdded);
+    socket.on("issuesAdded", handleIssuesAdded);
+    socket.on("issueUpdated", handleIssueUpdated);
 
     // Cleanup on unmount
     return () => {
-      socket.off("issueAdded");
-      socket.off("issueUpdated");
+      socket.off("issueAdded", handleIssueAdded);
+      socket.off("issuesAdded", handleIssuesAdded);
+      socket.off("issueUpdated", handleIssueUpdated);
     };
-  }, [issues]);
+  }, [counterId]);
+
+  // Listen for new issue and updates
+  // socket.on("issueAdded", (newIssue) => {
+  //   if (newIssue.counterId === counterId) {
+  //     setIssues((prevIssues) => [...prevIssues, newIssue]);
+  //   }
+  // });
+
+  // socket.on("issuesAdded", (newIssues) => {
+  //   if (Array.isArray(newIssues) && newIssues[0].counterId === counterId) {
+  //     setIssues((prevIssues) => [...prevIssues, ...newIssues]);
+  //   }
+  // });
+
+  // socket.on("issueUpdated", (updatedIssue) => {
+  //   setIssues((prevIssues) =>
+  //     prevIssues.map((issue) =>
+  //       issue.issueId === updatedIssue.issueId ? updatedIssue : issue
+  //     )
+  //   );
+  // });
+
+  // Cleanup on unmount
+  // return () => {
+  //   socket.off("issueAdded");
+  //   socket.off("issueUpdated");
+  // };
   //---------------------------------------------------
 
   const fetchCounterName = async (assignUser) => {
@@ -103,13 +138,14 @@ function CounterQueuePage() {
     }
   };
 
-  const handleCall = (userId, tokenNo, counterName) => {
+  const handleCall = (userId, tokenNo, counterName, nextTokenNo) => {
+    console.log("Next Token No", nextTokenNo);
     setCalledIssues([...calledIssues, userId]);
     // Join the user to their room
     socket.emit("joinRoom", userId);
 
     socket.emit("callUser", { userId, counterName });
-    socket.emit("curruntToken", { tokenNo, counterName });
+    socket.emit("curruntToken", { tokenNo, counterName, nextTokenNo });
 
     socket.emit("callNotification", {
       message: `Token ${tokenNo} is being called at ${counterName}`,
@@ -121,49 +157,54 @@ function CounterQueuePage() {
       <Header />
       <div className="issues-list">
         {issues.length > 0 ? (
-          issues.map((issue, index) => (
-            <div
-              key={index}
-              className="issue-card my-2 p-3 shadow-lg rounded-lg flex justify-between items-center"
-            >
-              <div className=" flex gap-5 items-center">
-                <div className=" bg-slate-200 p-2 rounded-full">
-                  <p className=" font-bold text-red-600">{issue.tokenNo}</p>
+          issues.map((issue, index) => {
+            const nextIssue = issues[index + 1];
+            const nextTokenNo = nextIssue ? nextIssue.tokenNo : null;
+            return (
+              <div
+                key={index}
+                className="issue-card my-2 p-3 shadow-lg rounded-lg flex justify-between items-center"
+              >
+                <div className=" flex gap-5 items-center">
+                  <div className=" bg-slate-200 p-2 rounded-full">
+                    <p className=" font-bold text-red-600">{issue.tokenNo}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg">{issue.name}</h3>
+                    <p className=" font-bold text-blue-700">{issue.phoneNo}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-lg">{issue.name}</h3>
-                  <p className=" font-bold text-blue-700">{issue.phoneNo}</p>
+
+                <div className="flex items-center gap-5">
+                  <Link
+                    to={`/counter/issueView/${issue.issueId}`}
+                    className="p-2 bg-red-600 text-white rounded-lg"
+                  >
+                    View
+                  </Link>
+
+                  <button
+                    onClick={() =>
+                      handleCall(
+                        issue.userId,
+                        issue.tokenNo,
+                        issue.counter.counterName,
+                        nextTokenNo
+                      )
+                    }
+                    // className="p-2 bg-green-600 text-white rounded-lg"
+                    className={`p-2 text-white rounded-lg ${
+                      calledIssues.includes(issue.userId)
+                        ? "bg-yellow-600"
+                        : "bg-green-600"
+                    }`}
+                  >
+                    {calledIssues.includes(issue.userId) ? "Recall" : "Call"}
+                  </button>
                 </div>
               </div>
-
-              <div className="flex items-center gap-5">
-                <Link
-                  to={`/counter/issueView/${issue.issueId}`}
-                  className="p-2 bg-red-600 text-white rounded-lg"
-                >
-                  View
-                </Link>
-
-                <button
-                  onClick={() =>
-                    handleCall(
-                      issue.userId,
-                      issue.tokenNo,
-                      issue.counter.counterName
-                    )
-                  }
-                  // className="p-2 bg-green-600 text-white rounded-lg"
-                  className={`p-2 text-white rounded-lg ${
-                    calledIssues.includes(issue.userId)
-                      ? "bg-yellow-600"
-                      : "bg-green-600"
-                  }`}
-                >
-                  {calledIssues.includes(issue.userId) ? "Recall" : "Call"}
-                </button>
-              </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <p>No issues to display</p>
         )}

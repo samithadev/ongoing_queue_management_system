@@ -83,6 +83,7 @@ io.on('connection', (socket) => {
   socket.on('curruntToken', (data) => {
     io.to(data.counterName).emit('callTokenNo', {
       token: data.tokenNo,
+      nextToken: data.nextTokenNo
     });
   });
 
