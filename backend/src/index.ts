@@ -10,6 +10,7 @@ import issueRouter from './routes/issueRoutes';
 
 import * as dotenv from "dotenv";
 import connectDB from './typeorm';
+import { Issue } from './entities/Issue';
 dotenv.config();
 
 const app = express();
@@ -81,6 +82,7 @@ io.on('connection', (socket) => {
 
   // Listen for call events from the counter
   socket.on('curruntToken', (data) => {
+    console.log("Currunt Token:",data)
     io.to(data.counterName).emit('callTokenNo', {
       token: data.tokenNo,
       nextToken: data.nextTokenNo
@@ -92,6 +94,17 @@ io.on('connection', (socket) => {
     // Broadcast the issueDone event to all connected clients
     io.emit('issueDone', data);
   });
+
+   // Listen for issue canceled events
+   socket.on('issueCanceled', (canceledIssue) => {
+    console.log(`Issue canceled: ${canceledIssue.issueId}`);
+    io.to(canceledIssue.counterId).emit('issueCanceled', canceledIssue);
+  });
+
+  socket.on('changeCounter', (newIssues) => {
+    console.log("this new issues: ", newIssues)
+      io.emit("changeCounter", newIssues);
+  })
 
   // socket.on('disconnect', () => {
   //   console.log('Client disconnected');

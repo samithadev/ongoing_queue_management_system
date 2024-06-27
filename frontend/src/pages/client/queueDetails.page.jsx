@@ -9,11 +9,16 @@ import { useSocket } from "../../socketContext";
 const socket = io("http://localhost:3000");
 
 function QueueDetailsPage() {
-  const [currentToken, setCurrentToken] = useState(null);
+  const [currentToken, setCurrentToken] = useState(
+    localStorage.getItem("currentToken") || null
+  );
+  const [issue, setIssue] = useState();
   const [issueId, setIssueId] = useState(null);
   const [myToken, setMyToken] = useState(null);
   const [counterName, setCounterName] = useState("");
-  const [nextToken, setNextToken] = useState(null);
+  const [nextToken, setNextToken] = useState(
+    localStorage.getItem("nextToken") || "none"
+  );
 
   const { notifications } = useSocket();
 
@@ -33,62 +38,80 @@ function QueueDetailsPage() {
     }
   }, [notifications]);
 
+  // Fetch issue status on component mount
+  const fetchIssueStatus = async (userId) => {
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/issue/getIssueIdByStatus",
+        {
+          userId: userId,
+          issueStatus: "pending",
+          status: "online",
+        }
+      );
+      const issueId = response.data.issueId;
+      setIssueId(issueId);
+
+      if (issueId) {
+        const responseIssue = await axios.post(
+          "http://localhost:3000/issue/singleIssue",
+          {
+            issueId: issueId,
+          }
+        );
+        const issue = responseIssue.data;
+        console.log(issue);
+        setIssue(issue);
+        setMyToken(issue.tokenNo);
+        setCounterName(issue.counter.counterName);
+
+        socket.emit("joinCounterRoom", issue.counter.counterName); // Join the counter room
+
+        if (issue.issueStatus === "done") {
+          navigate("/client/createIssue");
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching issue status", error);
+    }
+  };
+
   useEffect(() => {
     const decodedToken = jwtDecode(localStorage.getItem("token"));
     const userId = decodedToken.userId;
 
-    // Fetch issue status on component mount
-    const fetchIssueStatus = async () => {
-      try {
-        const response = await axios.post(
-          "http://localhost:3000/issue/getIssueIdByStatus",
-          {
-            userId: userId,
-            issueStatus: "pending",
-            status: "online",
-          }
-        );
-        const issueId = response.data.issueId;
-        setIssueId(issueId);
+    fetchIssueStatus(userId);
 
-        if (issueId) {
-          const responseIssue = await axios.post(
-            "http://localhost:3000/issue/singleIssue",
-            {
-              issueId: issueId,
-            }
-          );
-          const issue = responseIssue.data;
-          console.log(issue);
-          setMyToken(issue.tokenNo);
-          setCounterName(issue.counter.counterName);
+    // return () => {
+    //   socket.off("issueDone");
+    //   socket.off("changeCounter");
+    // };
+  }, []);
 
-          socket.emit("joinCounterRoom", issue.counter.counterName); // Join the counter room
-
-          if (issue.issueStatus === "done") {
-            navigate("/client/createIssue");
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching issue status", error);
-      }
-    };
-
-    fetchIssueStatus();
-
+  useEffect(() => {
     socket.on("callTokenNo", (data) => {
+      console.log("called", data);
       setCurrentToken(data.token);
       setNextToken(data.nextToken);
-      // localStorage.setItem("currentToken", JSON.stringify(data.token));
+      localStorage.setItem("currentToken", data.token);
+      localStorage.setItem("nextToken", data.nextToken);
     });
 
     socket.on("issueDone", () => {
       navigate("/client/createIssue");
     });
 
+    socket.on("changeCounter", (newIssues) => {
+      console.log("this is issue: ", newIssues);
+      newIssues.forEach((issue) => {
+        fetchIssueStatus(issue.userId);
+      });
+    });
+
     return () => {
       socket.off("callTokenNo");
       socket.off("issueDone");
+      socket.off("changeCounter");
     };
   }, []);
 
@@ -100,7 +123,7 @@ function QueueDetailsPage() {
         status: "offline",
       });
       alert("Issue marked as canceled!");
-      socket.emit("issueDone", { issueId });
+      socket.emit("issueCanceled", issue);
       navigate("/client/createIssue");
     } catch (error) {
       console.error("Error updating issue status", error);
@@ -121,7 +144,7 @@ function QueueDetailsPage() {
         <div className="flex flex-col items-center justify-center border-2 border-solid p-16 gap-3">
           <h2 className="text-5xl">Current No</h2>
           <h2 className="text-8xl text-red-600">
-            {currentToken || "Loading..."}
+            {currentToken !== null ? currentToken : "Loading..."}
           </h2>
         </div>
 
@@ -132,7 +155,7 @@ function QueueDetailsPage() {
 
         <div className="flex gap-3 text-2xl mt-5">
           <h1 className="font-bold">Next:</h1>
-          <h2>{nextToken || "none"}</h2>
+          <h2>{nextToken !== null ? nextToken : "none"}</h2>
         </div>
 
         <div className="flex gap-3 text-2xl mt-5">
@@ -144,7 +167,7 @@ function QueueDetailsPage() {
             <h1 className="font-bold">You're Now</h1>
           </div>
         )}
-        {myToken === currentToken + 1 && (
+        {myToken === nextToken && (
           <div className="flex gap-3 text-2xl mt-5 text-blue-600">
             <h1 className="font-bold">Ready your next</h1>
           </div>

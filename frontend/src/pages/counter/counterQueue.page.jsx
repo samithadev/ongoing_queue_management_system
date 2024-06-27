@@ -30,11 +30,15 @@ function CounterQueuePage() {
         }
       );
       setIssues(
-        response.data.filter(
-          (issue) =>
-            issue.issueStatus === "pending" && issue.status === "online"
-        )
+        response.data
+          .filter(
+            (issue) =>
+              issue.issueStatus === "pending" && issue.status === "online"
+          )
+          .sort((a, b) => a.tokenNo - b.tokenNo)
       );
+
+      socket.emit("joinCounter", counterId);
     } catch (error) {
       console.error("Error fetching issues", error);
     }
@@ -54,7 +58,6 @@ function CounterQueuePage() {
   useEffect(() => {
     if (counterId) {
       fetchIssues(counterId);
-      socket.emit("joinCounter", counterId);
     }
   }, [counterId]);
 
@@ -63,34 +66,46 @@ function CounterQueuePage() {
   useEffect(() => {
     // Listen for new issue and updates
     const handleIssueAdded = (newIssue) => {
-      if (newIssue.counterId === counterId) {
-        setIssues((prevIssues) => [...prevIssues, newIssue]);
-      }
+      // if (newIssue.counterId === counterId) {
+      //   setIssues((prevIssues) => [...prevIssues, newIssue]);
+      // }
+      fetchIssues(newIssue.counterId);
     };
 
     const handleIssuesAdded = (newIssues) => {
-      if (Array.isArray(newIssues) && newIssues[0].counterId === counterId) {
-        setIssues((prevIssues) => [...prevIssues, ...newIssues]);
-      }
+      // if (Array.isArray(newIssues) && newIssues[0].counterId === counterId) {
+      //   setIssues((prevIssues) => [...prevIssues, ...newIssues]);
+      // }
+      fetchIssues(newIssues[0].counterId);
     };
 
-    const handleIssueUpdated = (updatedIssue) => {
-      setIssues((prevIssues) =>
-        prevIssues.map((issue) =>
-          issue.issueId === updatedIssue.issueId ? updatedIssue : issue
-        )
-      );
+    // const handleIssueUpdated = (updatedIssue) => {
+    //   setIssues((prevIssues) =>
+    //     prevIssues.map((issue) =>
+    //       issue.issueId === updatedIssue.issueId ? updatedIssue : issue
+    //     )
+    //   );
+    // };
+
+    const handleIssueCanceled = (canceledIssue) => {
+      // setIssues((prevIssues) => {
+      //   prevIssues.filter((issue) => issue.issueId !== canceledIssue.issueId) ||
+      //     [];
+      // });
+      fetchIssues(canceledIssue.counterId);
     };
 
     socket.on("issueAdded", handleIssueAdded);
     socket.on("issuesAdded", handleIssuesAdded);
-    socket.on("issueUpdated", handleIssueUpdated);
+    // socket.on("issueUpdated", handleIssueUpdated);
+    socket.on("issueCanceled", handleIssueCanceled);
 
     // Cleanup on unmount
     return () => {
       socket.off("issueAdded", handleIssueAdded);
       socket.off("issuesAdded", handleIssuesAdded);
-      socket.off("issueUpdated", handleIssueUpdated);
+      // socket.off("issueUpdated", handleIssueUpdated);
+      socket.off("issueCanceled", handleIssueCanceled);
     };
   }, [counterId]);
 

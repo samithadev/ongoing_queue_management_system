@@ -107,6 +107,8 @@ function Header() {
         console.log("reassign Issues: ", reAssignedIssues);
 
         socket.emit("issuesAdded", reAssignedIssues);
+
+        socket.emit("changeCounter", reAssignedIssues);
       } catch (error) {
         console.log(error);
         if (error.response.data.error === "Can not reassign") {
@@ -145,10 +147,17 @@ function Header() {
         >
           Close Counter
         </button>
-        <div className=" flex items-center border-2 p-2 rounded-full gap-5">
+        {/* <div className=" flex items-center border-2 p-2 rounded-full gap-5">
           <FaRegUserCircle size={30} />{" "}
           <div className=" text-xl">{username}</div>
-        </div>
+        </div> */}
+        <Link
+          to={"/counter/allissues"}
+          className=" flex items-center border-2 p-2 rounded-full gap-5"
+        >
+          <FaRegUserCircle size={30} />{" "}
+          <div className=" text-xl">{username}</div>
+        </Link>
       </div>
     </div>
   );

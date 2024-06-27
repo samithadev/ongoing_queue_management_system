@@ -104,10 +104,22 @@ function IssueViewPage() {
           userId: nextIssue.userId,
           counterName: nextIssue.counter.counterName,
         });
+        const nextTokenNo =
+          updatedIssues.length > 1 ? updatedIssues[1].tokenNo : null;
+
         socket.emit("curruntToken", {
           tokenNo: nextIssue.tokenNo,
           counterName: nextIssue.counter.counterName,
+          nextTokenNo: nextTokenNo,
         });
+        console.log(
+          "Next Token No: ",
+          nextTokenNo,
+          " TokenNo: ",
+          nextIssue.tokenNo,
+          " counterName: ",
+          nextIssue.counter.counterName
+        );
         socket.emit("callNotification", {
           message: `Token ${nextIssue.tokenNo} is being called at ${nextIssue.counter.counterName}`,
         });
