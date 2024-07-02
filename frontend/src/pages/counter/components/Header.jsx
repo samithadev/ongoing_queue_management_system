@@ -66,29 +66,6 @@ function Header() {
     }
   };
 
-  // const handleCounterClose = async () => {
-  //   console.log(issues);
-  //   await axios.put("http://localhost:3000/issue/closeCounter", {
-  //     counterId,
-  //   });
-  //   if (error.response && error.response.data && error.response.data.message === "No online counters available") {
-  //     alert("Cannot close counter as there are issues assigned to it.");
-  //     return;
-  //   }
-  //   try {
-  //     console.log(assignuser);
-
-  //     await axios.put("http://localhost:3000/counter/resign_user", {
-  //       assignUser: assignuser,
-  //     });
-  //     localStorage.removeItem("token");
-  //     localStorage.clear();
-  //     navigate("/counterlogin");
-  //   } catch (error) {
-  //     console.error("Error resigning user", error);
-  //   }
-  // };
-
   const handleCounterClose = async () => {
     console.log(issues);
     const pendingIssues = issues.filter(

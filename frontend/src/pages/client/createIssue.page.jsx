@@ -105,21 +105,6 @@ function CreateIssuePage() {
 
   return (
     <div className="mx-16">
-      {/* <div className=" flex items-center justify-between py-12 ">
-        <button
-          onClick={handleLogout}
-          className="p-2 bg-red-600 text-white rounded-lg"
-        >
-          Logout
-        </button>
-        <div className=" flex items-center gap-5">
-          <FiBell size={25} />
-          <div className=" flex items-center border-2 p-2 rounded-full gap-5">
-            <FaRegUserCircle size={30} />{" "}
-            <div className=" text-xl">{username}</div>
-          </div>
-        </div>
-      </div> */}
       <ClientHeader />
       <h1 className=" text-xl font-bold">Add Your Issue Details</h1>
       <form onSubmit={handleSubmit} className=" flex flex-col gap-3 mt-5  ">

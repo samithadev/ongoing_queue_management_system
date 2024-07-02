@@ -66,32 +66,14 @@ function CounterQueuePage() {
   useEffect(() => {
     // Listen for new issue and updates
     const handleIssueAdded = (newIssue) => {
-      // if (newIssue.counterId === counterId) {
-      //   setIssues((prevIssues) => [...prevIssues, newIssue]);
-      // }
       fetchIssues(newIssue.counterId);
     };
 
     const handleIssuesAdded = (newIssues) => {
-      // if (Array.isArray(newIssues) && newIssues[0].counterId === counterId) {
-      //   setIssues((prevIssues) => [...prevIssues, ...newIssues]);
-      // }
       fetchIssues(newIssues[0].counterId);
     };
 
-    // const handleIssueUpdated = (updatedIssue) => {
-    //   setIssues((prevIssues) =>
-    //     prevIssues.map((issue) =>
-    //       issue.issueId === updatedIssue.issueId ? updatedIssue : issue
-    //     )
-    //   );
-    // };
-
     const handleIssueCanceled = (canceledIssue) => {
-      // setIssues((prevIssues) => {
-      //   prevIssues.filter((issue) => issue.issueId !== canceledIssue.issueId) ||
-      //     [];
-      // });
       fetchIssues(canceledIssue.counterId);
     };
 
@@ -108,34 +90,6 @@ function CounterQueuePage() {
       socket.off("issueCanceled", handleIssueCanceled);
     };
   }, [counterId]);
-
-  // Listen for new issue and updates
-  // socket.on("issueAdded", (newIssue) => {
-  //   if (newIssue.counterId === counterId) {
-  //     setIssues((prevIssues) => [...prevIssues, newIssue]);
-  //   }
-  // });
-
-  // socket.on("issuesAdded", (newIssues) => {
-  //   if (Array.isArray(newIssues) && newIssues[0].counterId === counterId) {
-  //     setIssues((prevIssues) => [...prevIssues, ...newIssues]);
-  //   }
-  // });
-
-  // socket.on("issueUpdated", (updatedIssue) => {
-  //   setIssues((prevIssues) =>
-  //     prevIssues.map((issue) =>
-  //       issue.issueId === updatedIssue.issueId ? updatedIssue : issue
-  //     )
-  //   );
-  // });
-
-  // Cleanup on unmount
-  // return () => {
-  //   socket.off("issueAdded");
-  //   socket.off("issueUpdated");
-  // };
-  //---------------------------------------------------
 
   const fetchCounterName = async (assignUser) => {
     try {
